@@ -2,6 +2,8 @@
 
 Small discord bot to list current active torrents and add new torrents in predetermined locations. Adding torrents is owner only.
 
+Also supports adding via base64 by putting your url in the following format: `b6!{base_64_encoded_url}`.
+
 ![img1](img/commands.jpg)
 ![img2](img/commands2.jpg)
 

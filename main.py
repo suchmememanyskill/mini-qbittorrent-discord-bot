@@ -5,6 +5,7 @@ from typing import List
 from env import ENV
 import logging
 import qbittorrentapi
+import base64
 
 intents = discord.Intents.none()
 logger = logging.getLogger('discord.bot')
@@ -35,48 +36,53 @@ async def fruit_autocomplete(
 @bot.tree.command()
 @app_commands.check(owner_check)
 @discord.app_commands.autocomplete(location=fruit_autocomplete)
-async def torrent_add(interaction: discord.Interaction, location: str, url : str):
+async def frii_add(interaction: discord.Interaction, location: str, url : str):
     """Adds a torrent"""
     if location not in ENV.locations:
         await interaction.response.send_message(f'Invalid location: \'{location}\'', ephemeral=True)
         return
     
+    if url.startswith("b6!"):
+        base64_bytes = url[3:].encode('ascii')
+        message_bytes = base64.b64decode(base64_bytes)
+        url = message_bytes.decode('ascii')
+
     await interaction.response.defer(ephemeral=True)
 
     try:
         with qbittorrentapi.Client(**ENV.client_params) as client:
-            response = f"qBittorrent version: {client.app.version}\n\nTorrent added!"
+            response = f"App version: {client.app.version}\n\nTorrent added!"
             path = ENV.locations[location]
             if client.torrents_add(urls=url, save_path=path) != "Ok.":
-                raise Exception("Failed to add torrent.")
+                raise Exception("Failed to add download.")
 
     except Exception as e:
-        await interaction.followup.send(f"Failed to add torrent: {str(e)}", ephemeral=True)
+        await interaction.followup.send(f"Failed to add download: {str(e)}", ephemeral=True)
         return
 
     await interaction.followup.send(response)
 
 @bot.tree.command()
-async def torrents_list(interaction: discord.Interaction, ephemeral : bool = True):
+async def frii_list(interaction: discord.Interaction, ephemeral : bool = True):
     """Lists all current active torrents"""
     await interaction.response.defer(ephemeral=ephemeral)
 
     try:
         with qbittorrentapi.Client(**ENV.client_params) as client:
-            response = f"qBittorrent version: {client.app.version}\n\n"
+            response = f"App version: {client.app.version}\n\n"
 
             torrents = client.torrents_info()
             active_torrents = [x for x in torrents if x.state == "downloading"]
 
             if (len(active_torrents) <= 0):
-                response += "No active torrents found."
+                response += "No active downloads found."
             else:
                 response += "Downloading:\n"
                 for torrent in active_torrents:
                     response += f"- `{torrent.name}` {(torrent.progress * 100):.1f}%\n"
 
     except Exception as e:
-        await interaction.followup.send(f"Failed to fetch active torrents: {str(e)}", ephemeral=ephemeral)
+        await interaction.followup.send(f"Failed to fetch active downloads: {str(e)}", ephemeral=ephemeral)
         return
 
     await interaction.followup.send(response, ephemeral=ephemeral)
