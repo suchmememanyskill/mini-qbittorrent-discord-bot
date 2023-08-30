@@ -47,7 +47,7 @@ async def torrent_add(interaction: discord.Interaction, location: str, url : str
         with qbittorrentapi.Client(**ENV.client_params) as client:
             response = f"qBittorrent version: {client.app.version}\n\nTorrent added!"
             path = ENV.locations[location]
-            if client.torrents_add(urls=url, save_path=path, content_layout="Subfolder") != "Ok.":
+            if client.torrents_add(urls=url, save_path=path) != "Ok.":
                 raise Exception("Failed to add torrent.")
 
     except Exception as e:
